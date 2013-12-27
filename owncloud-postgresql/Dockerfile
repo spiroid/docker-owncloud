@@ -64,6 +64,4 @@ RUN chown -R www-data:www-data /var/www/owncloud
 RUN apt-get install -y --no-install-recommends supervisor
 ADD resources/etc/supervisor/ /etc/supervisor/
 
-EXPOSE :443
-
 CMD ["/usr/bin/supervisord"]
