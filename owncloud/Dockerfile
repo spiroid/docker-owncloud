@@ -1,39 +1,69 @@
-FROM ubuntu:12.04
-MAINTAINER Nick Jones "nick@dischord.org"
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" >> /etc/apt/sources.list
+FROM tianon/debian:jessie
+
+MAINTAINER Jonathan Dray <jonathan.dray@gmail.com>
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN sed -i 's/ftp.us/ftp.fr/g' /etc/apt/sources.list
 RUN apt-get -y update
 
-RUN dpkg-divert --local --rename --add /sbin/initctl
-RUN ln -s /bin/true /sbin/initctl
+# System locales configuration
+RUN apt-get install -y --no-install-recommends locales
 
-RUN locale-gen en_US en_US.UTF-8
-RUN dpkg-reconfigure locales
 
-RUN echo "mysql-server-5.5 mysql-server/root_password password root123" | debconf-set-selections
-RUN echo "mysql-server-5.5 mysql-server/root_password_again password root123" | debconf-set-selections
-RUN echo "mysql-server-5.5 mysql-server/root_password seen true" | debconf-set-selections
-RUN echo "mysql-server-5.5 mysql-server/root_password_again seen true" | debconf-set-selections
+# Install packages requirements
+RUN apt-get install -y --no-install-recommends bzip2 wget vim openssl ssl-cert sharutils curl
 
-RUN apt-get install -y apache2 php5 php5-gd php-xml-parser php5-intl php5-sqlite mysql-server-5.5 smbclient curl libcurl3 php5-mysql php5-curl bzip2 wget vim openssl ssl-cert sharutils
 
-RUN wget -q -O - http://download.owncloud.org/community/owncloud-5.0.13.tar.bz2 | tar jx -C /var/www/
+# NGINX install
+RUN apt-get install -y --no-install-recommends nginx
 
-RUN mkdir /etc/apache2/ssl
+RUN mkdir /etc/nginx/ssl
+ADD resources/ssl/ /etc/nginx/ssl/
+ADD resources/etc/nginx/sites-available/ /etc/nginx/sites-available/
+RUN ln -s /etc/nginx/sites-available/001-owncloud /etc/nginx/sites-enabled/
 
-ADD resources/cfgmysql.sh /tmp/
-RUN chmod +x /tmp/cfgmysql.sh
-RUN /tmp/cfgmysql.sh
-RUN rm /tmp/cfgmysql.sh
+# nginx config
+RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
+# since 'upload_max_filesize = 2M' in /etc/php5/fpm/php.ini
+RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 3m/" /etc/nginx/nginx.conf
+# disable daemon mode
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
-ADD resources/001-owncloud.conf /etc/apache2/sites-available/
-ADD resources/start.sh /
 
-RUN a2ensite 001-owncloud.conf
-RUN a2enmod rewrite ssl
+# PHP packages
+RUN apt-get install -y --no-install-recommends php5-fpm php5-gd php-xml-parser php5-intl php5-curl php5-json php5-mcrypt
+
+# php-fpm config
+RUN sed -i -e "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g" /etc/php5/fpm/php-fpm.conf
+
+
+# Postgresql install
+RUN apt-get install -y --no-install-recommends postgresql php5-pgsql
+
+# Initialize postgres database for owncloud
+ADD resources/sql/owncloud-postgresql.sql /tmp/
+RUN /etc/init.d/postgresql start && sleep 2 && su postgres -c "cd /tmp ; psql -a -f owncloud-postgresql.sql &&  exit"
+
+# Hack posgresql configuration so it can be launched in foreground mode
+RUN sed -i 's/^auto.*$/manual/g' /etc/postgresql/9.3/main/start.conf
+
+# Add shell script to launch postgres in foreground mode
+ADD resources/usr/local/bin/postgresql.sh /usr/local/bin/
+RUN chmod 0755 /usr/local/bin/postgresql.sh
+
+
+# Get latest owncloud release
+RUN mkdir /var/www
+RUN wget -q -O - http://download.owncloud.org/community/owncloud-6.0.0a.tar.bz2 | tar jx -C /var/www
+RUN chown -R www-data:www-data /var/www/owncloud
+
+
+# Install supervisord
+# Usefull to start and monitor multiple processes (easier than systemd in a docker context)
+RUN apt-get install -y --no-install-recommends supervisor
+ADD resources/etc/supervisor/ /etc/supervisor/
 
 EXPOSE :443
 
-RUN chown -R www-data:www-data /var/www/owncloud
-RUN chmod +x /start.sh
-
-CMD ["/start.sh"]
+CMD ["/usr/bin/supervisord"]
