@@ -54,9 +54,13 @@ RUN chmod 0755 /usr/local/bin/postgresql.sh
 
 
 # Get latest owncloud release
-RUN mkdir /var/www
+RUN mkdir /var/www /data
+# Create a volume to share with other containers
+VOLUME ["/data"]
+
 RUN wget -q -O - http://download.owncloud.org/community/owncloud-6.0.0a.tar.bz2 | tar jx -C /var/www
-RUN chown -R www-data:www-data /var/www/owncloud
+ADD resources/var/www/owncloud/config/autoconfig.php /var/www/owncloud/config/
+RUN chown -R www-data: /var/www/owncloud /data
 
 
 # Install supervisord
@@ -64,4 +68,6 @@ RUN chown -R www-data:www-data /var/www/owncloud
 RUN apt-get install -y --no-install-recommends supervisor
 ADD resources/etc/supervisor/ /etc/supervisor/
 
+
+# Command to start on container default run
 CMD ["/usr/bin/supervisord"]
