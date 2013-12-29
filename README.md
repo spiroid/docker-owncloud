@@ -69,9 +69,13 @@ replace ```<your pseudo>``` by a prefix you want to appear in your local docker 
 
 ## TODO
 
-See [TODO](TODO.md) file for a short list
+See [TODO](TODO.md) file for a short list.
 
-## Resources 
+## LICENSE
+
+See [LICENSE](LICENSE) file.
+
+## Resources
 
 ### Other Docker images
  * [Docker - NGINX - PHP5](https://github.com/darron/docker-nginx-php5)
