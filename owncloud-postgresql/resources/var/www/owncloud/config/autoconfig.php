@@ -9,4 +9,5 @@ $AUTOCONFIG = array(
     "dbtableprefix" => "",
     "adminlogin"    => "admin",
     "adminpass"     => "admin",
+    "forcessl"      => true,
 );
