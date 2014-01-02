@@ -2,8 +2,13 @@ FROM tianon/debian:jessie
 
 MAINTAINER Jonathan Dray <jonathan.dray@gmail.com>
 
+# Configure apt sources and pinning
+# For now also need stable repository
+# with pinning configured, see issue #5 on github
+# https://github.com/spiroid/docker-owncloud/issues/5
 ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/ftp.us/ftp.fr/g' /etc/apt/sources.list
+ADD resources/etc/apt/ /etc/apt/
 RUN apt-get -y update
 
 # System locales configuration
