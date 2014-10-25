@@ -1,0 +1,14 @@
+web:
+    build: owncloud-nginx
+    ports:
+     - 80:80
+    volumes_from:
+     - owncloud
+    links:
+     - db
+
+db:
+    image: postgres
+
+owncloud:
+    build: owncloud
