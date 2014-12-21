@@ -19,51 +19,42 @@ There is a room for tons of improvements, so please feel free to open issues and
   $ cd docker-owncloud
 ```
 
+## Intro
 
-## OwnCloud + NGINX + Postgresql
+This builds two docker elements in order to run owncloud :
 
-This docker image is based on [Debian Jessie](http://www.debian.org/releases/testing/) release and contains all the components with no external dependencies.
-Installed applications:
-
-* NGINX as front webserver
-* Postgresql as database backend
-* PHP5 + PHP-FPM
-* OwnCloud version 6.0.0a
-* Supervisord to monitor running processes
+* One image with a nginx + php-fpm web server with configuration options tuned for owncloud
+* A docker data container volume in order to allow you to persist the data between different containers
 
 
-### Some details
+## Postgresql database
 
-#### SSL Certificate
-
-Your owncloud instance will only be avaiable on HTTPS. In order to make it work you'll need to provide a valid SSL certificate. It can be a self signed certificate or a certificate generated and signed by a trusted authority.
-You need to put a couple of files in the resources/ssl directory. The expected file names are owncloud.crt and owncloud.key and they are *required* to successfully generate the docker image.
-
-
-#### Postgresql database
-
-A specific postgresql database is created during the build process.
-I followed vagrant conventions and by default the db name, user and password are 'owncloud'
+The default install is setup for PostgreSQL database, but no docker image is provided.
+Please use an already existing and well prepared postgresql image from docker hub, or use fig :)
+More on that in the next section.
 
 
+## Build
 
-### Building the image
+### FIG
 
-cd to the directory where you cloned the repository.
 
+### Building manually
+
+Replace ```<your pseudo>``` by a prefix you want to appear in your local docker image registry.
 
 ```
-  $ cd owncloud-postgresql
-  $ docker build -t <your pseudo>/owncloud-postgresql .
+$ docker build -t <your pseudo>/owncloud ./owncloud
+$ docker build -t <your pseudo>/owncloud-nginx ./owncloud-nginx
 ```
 
-replace ```<your pseudo>``` by a prefix you want to appear in your local docker image registry.
 
+## Running with fig
 
-### Runnning the container
+As simple as :
 
 ```
-  $ docker run -p 443 -h 'hostname' -d  <your pseudo>/owncloud-postgresql
+  $ fig up
 ```
 
 
@@ -71,9 +62,11 @@ replace ```<your pseudo>``` by a prefix you want to appear in your local docker 
 
 See [TODO](TODO.md) file for a short list.
 
+
 ## LICENSE
 
 See [LICENSE](LICENSE) file.
+
 
 ## Resources
 
@@ -81,7 +74,7 @@ See [LICENSE](LICENSE) file.
  * [Docker - NGINX - PHP5](https://github.com/darron/docker-nginx-php5)
  * [Docker - NGINX](https://github.com/orchardup/docker-nginx)
  * [Docker - NGINX - Supervisor](https://github.com/dz0ny/docker-wpdev)
- 
+
 ### Blog articles
  * [Docker and OwnCloud - part 1](http://dischord.org/blog/2013/07/10/docker-and-owncloud/)
  * [Docker and OwnCloud - part 2](http://dischord.org/blog/2013/08/13/docker-and-owncloud-part-2/)
