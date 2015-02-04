@@ -1,14 +1,23 @@
-web:
-    build: owncloud-nginx
+nginx:
+    image: nginx
     ports:
-     - 80:80
+        - 80:80
+    volumes:
+        - resources/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
     volumes_from:
-     - owncloud
+        - owncloud
     links:
-     - db
+        - phpfpm
 
-db:
-    image: postgres
+phpfpm:
+    build: owncloud-php
+    volumes_from:
+        - owncloud
+    links:
+        - db
 
 owncloud:
     build: owncloud
+
+db:
+    image: postgres

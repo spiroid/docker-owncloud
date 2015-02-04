@@ -13,7 +13,8 @@ bzcat /owncloud-*.tar.bz2 | tar x -C /var/www -f - ; \
 fi
 ADD resources/var/www/owncloud/config/autoconfig.php /var/www/owncloud/config/autoconfig.php
 RUN mkdir /data && \
-    chown -R www-data:www-data /var/www/owncloud /data && \
+    mv /var/www/owncloud /var/www/html && \
+    chown -R www-data:www-data /var/www/html /data && \
     rm /owncloud-*.tar.bz2
 
-VOLUME ["/var/www", "/data"]
+VOLUME ["/var/www/html", "/data"]
